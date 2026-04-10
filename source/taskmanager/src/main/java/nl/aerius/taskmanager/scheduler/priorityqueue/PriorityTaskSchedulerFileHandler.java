@@ -55,6 +55,7 @@ public class PriorityTaskSchedulerFileHandler implements SchedulerFileConfigurat
   private PriorityTaskSchedule readFromEnvironment(final String workerQueueName) throws JsonProcessingException {
     final String environmentKey = ENV_PREFIX + workerQueueName.toUpperCase(Locale.ROOT);
     final String environmentValue = System.getenv(environmentKey);
+
     if (environmentValue != null) {
       LOG.info("Using configuration for worker queue {} from environment", workerQueueName);
       return objectMapper.readValue(environmentValue, PriorityTaskSchedule.class);

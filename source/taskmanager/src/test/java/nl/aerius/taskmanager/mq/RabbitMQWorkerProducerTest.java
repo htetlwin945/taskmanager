@@ -48,7 +48,7 @@ class RabbitMQWorkerProducerTest extends AbstractRabbitMQTest {
   void testForwardMessage() throws IOException, InterruptedException {
     final byte[] sendBody = "4321".getBytes();
 
-    final WorkerProducer wp = adapterFactory.createWorkerProducer(new QueueConfig(WORKER_QUEUE_NAME, false, false, null));
+    final WorkerProducer wp = adapterFactory.createWorkerProducer(new QueueConfig(WORKER_QUEUE_NAME, false, false, -1, null));
     wp.start();
     final BasicProperties bp = new BasicProperties();
     wp.dispatchMessage(new RabbitMQMessage(WORKER_QUEUE_NAME, null, 4321, bp, sendBody) {

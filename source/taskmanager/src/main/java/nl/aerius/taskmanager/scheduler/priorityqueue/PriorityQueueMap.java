@@ -70,6 +70,11 @@ class PriorityQueueMap<K extends PriorityQueueMapKeyMapper> {
     tasksOnWorkersPerQueue.computeIfAbsent(key(taskRecord), k -> new AtomicInteger()).incrementAndGet();
   }
 
+  /**
+   * Returns the number of tasks on the worker as known by the taskmanager.
+   *
+   * @return total number of tasks on the worker
+   */
   public int onWorkerTotal() {
     return tasksOnWorkersPerQueue.entrySet().stream().mapToInt(e -> e.getValue().get()).sum();
   }

@@ -16,10 +16,10 @@
  */
 package nl.aerius.taskmanager.domain;
 
-public record QueueConfig(String queueName, boolean durable, boolean eagerFetch, RabbitMQQueueType queueType) {
+public record QueueConfig(String queueName, boolean durable, boolean eagerFetch, int maxWorkersAvailable, RabbitMQQueueType queueType) {
   @Override
   public final String toString() {
-    return String.format("Queue name:%s, durable:%b, eagerFetch:%b, queueType:%s", queueName, durable, eagerFetch,
-        queueType == null ? "default" : queueType.type());
+    return String.format("Queue name:%s, durable:%b, eagerFetch:%b, maxWorkersAvailable:%d, queueType:%s", queueName, durable, eagerFetch,
+        maxWorkersAvailable, queueType == null ? "default" : queueType.type());
   }
 }

@@ -32,6 +32,11 @@ public class TaskSchedule<T extends TaskQueue> {
 
   private Boolean eagerFetch;
 
+  /*
+   * Maximum number of workers available when the system is fully scaled.
+   */
+  private int maxWorkersAvailable;
+
   private RabbitMQQueueType queueType;
 
   private List<T> queues = new ArrayList<>();
@@ -75,4 +80,19 @@ public class TaskSchedule<T extends TaskQueue> {
   public void setQueueType(final String queueType) {
     this.queueType = RabbitMQQueueType.valueOf(queueType.toUpperCase(Locale.ROOT));
   }
+
+  public int getMaxWorkersAvailable() {
+    return maxWorkersAvailable;
+  }
+
+  public void setMaxWorkersAvailable(final int maxWorkersAvailable) {
+    this.maxWorkersAvailable = maxWorkersAvailable;
+  }
+
+  @Override
+  public String toString() {
+    return "workerQueueName=" + workerQueueName + ", durable=" + durable + ", eagerFetch=" + eagerFetch + ", maxWorkersAvailable="
+        + maxWorkersAvailable + ", queueType=" + queueType;
+  }
+
 }

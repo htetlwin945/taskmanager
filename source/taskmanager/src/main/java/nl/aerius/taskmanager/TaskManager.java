@@ -83,10 +83,11 @@ class TaskManager<T extends TaskQueue, S extends TaskSchedule<T>> {
   public void updateTaskScheduler(final TaskSchedule<T> schedule) throws InterruptedException {
     // Set up scheduler with worker pool
     final String workerQueueName = schedule.getWorkerQueueName();
-    final QueueConfig workerQueueConfig = new QueueConfig(workerQueueName, schedule.isDurable(), schedule.isEagerFetch(), schedule.getQueueType());
+    final QueueConfig workerQueueConfig = new QueueConfig(workerQueueName, schedule.isDurable(), schedule.isEagerFetch(),
+        schedule.getMaxWorkersAvailable(), schedule.getQueueType());
 
     if (!buckets.containsKey(workerQueueName)) {
-      LOG.info("Added scheduler for worker queue {}", workerQueueName);
+      LOG.info("Added scheduler for worker queue {}", schedule);
       buckets.put(workerQueueName, new TaskScheduleBucket(workerQueueConfig));
     }
     final TaskScheduleBucket taskScheduleBucket = buckets.get(workerQueueName);
@@ -211,7 +212,7 @@ class TaskManager<T extends TaskQueue, S extends TaskSchedule<T>> {
 
     private void addOrUpdateTaskQueue(final T taskQueueConfiguration, final QueueConfig workerQueueConfig) {
       addTaskConsumerIfAbsent(new QueueConfig(taskQueueConfiguration.getQueueName(), workerQueueConfig.durable(), workerQueueConfig.eagerFetch(),
-          workerQueueConfig.queueType()));
+          workerQueueConfig.maxWorkersAvailable(), workerQueueConfig.queueType()));
       taskScheduler.updateQueue(taskQueueConfiguration);
     }
 

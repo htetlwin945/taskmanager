@@ -91,9 +91,10 @@ The json format of the configuration files is as follows:
 ```
 {
   "workerQueueName": "<type of the queue>",
-  "durable" : <true|false>
-  "eagerFetch" : <true|false>
-  "queueType": <classic|quorum|stream>
+  "durable" : <true|false>,
+  "eagerFetch" : <true|false>,
+  "queueType": <classic|quorum|stream>,
+  "maxWorkersAvailable": <number>,
   "queues": [
     {
       "queueName": "<client queue name>",
@@ -115,7 +116,7 @@ Some queues can have derived messages on the queue, that are recreated by the pa
 For these queues it would make sense to not make them durable.
 RabbitMQ will require less storage space/IOPS and be faster as it won't need to depend on disk I/O for these queues.
 
-The parameter `eagerFetch` indicates that all tasks on the queue will be prefetched.
+The parameter `eagerFetch` (optional) indicates that all tasks on the queue will be prefetched.
 If not set or set to false it will only fetch a single task from the queue.
 By fetching all tasks from the queue as they arrive it can give different priorities to all tasks put on the same queue.
 Effectively it will give tasks on the same queue that have fewer tasks running on a worker a higher priority over tasks with more tasks running on a worker.
@@ -127,6 +128,16 @@ If not set it will not set this arguments (used for backward compatibility, defa
 If `durable` is true queues will be set to `classic` (or default if not set) because other queue types are durable by default.
 Changing the `queueType` configuration parameter if the queues are already created won't work.
 If `queueType` needs to be changed, the queues need to be deleted first.
+
+The parameter `maxWorkersAvailable` (optional) can be set to the maximum number of workers the system can scale to when using automatically scaling of workers.
+This is useful because when worker resources are automatically scaled it can cause issues in combination with a low `maxCapacityUse` parameter.
+For example if worker scaling is based on the percentage workers being used it can mean the system will never scale up because the `maxCapacityUse` for certain input queues will never exceed the scaling threshold percentage.
+Especially when the system runs with a low number of workers the `maxCapacityUse` is easily reached before the scaling threshold is reached.
+By setting `maxWorkersAvailable` the scheduler will determine if tasks already have reached the `maxCapacityUse` value based on the `maxWorkersAvailable` value and not the actual number of workers running.
+It will then schedule tasks beyond the `maxCapacityUse` assuming this will trigger the system to scale up as needed.
+Until the system is scaled up more resources for a specific queue could be claimed than would be allowed by the `maxCapacityUse` percentage.
+But this should only be temporary, unless `maxWorkersAvailable` is wrongly specified, and doesn't match the actual available resources.
+When more workers would be available than was configured as `maxWorkersAvailable` the scheduler will assign workers proportionally to the `maxCapacityUse` based on the actual number of workers available.
 
 In `queues` there can be 1 or more queue configurations.
 Each queue configuration consists of 3 parameters:

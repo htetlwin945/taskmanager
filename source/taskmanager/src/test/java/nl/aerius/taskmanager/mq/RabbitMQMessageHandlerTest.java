@@ -62,7 +62,7 @@ class RabbitMQMessageHandlerTest extends AbstractRabbitMQTest {
   @Timeout(value = 10, unit = TimeUnit.SECONDS)
   void testMessageReceivedHandler() throws IOException, InterruptedException {
     final byte[] receivedBody = "4321".getBytes();
-    final TaskMessageHandler<?> tmh = adapterFactory.createTaskMessageHandler(new QueueConfig(taskQueueName, false, false, null));
+    final TaskMessageHandler<?> tmh = adapterFactory.createTaskMessageHandler(new QueueConfig(taskQueueName, false, false, -1, null));
     final Semaphore lock = new Semaphore(0);
     final DataDock data = new DataDock();
     tmh.start();
@@ -108,7 +108,7 @@ class RabbitMQMessageHandlerTest extends AbstractRabbitMQTest {
     final AtomicInteger shutdownCallsCounter = new AtomicInteger();
 
     final MessageReceivedHandler mockMessageReceivedHandler = mock(MessageReceivedHandler.class);
-    final TaskMessageHandler<?> tmh = adapterFactory.createTaskMessageHandler(new QueueConfig(taskQueueName, false, false, null));
+    final TaskMessageHandler<?> tmh = adapterFactory.createTaskMessageHandler(new QueueConfig(taskQueueName, false, false, -1, null));
 
     ((RabbitMQMessageHandler) tmh).setRetryTimeMilliseconds(1L);
     doAnswer(invoke -> null).when(mockChannel).addShutdownListener(shutdownListenerCaptor.capture());

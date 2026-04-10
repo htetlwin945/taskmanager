@@ -64,7 +64,8 @@ class WorkerPoolTest {
       return null;
     }).when(workerUpdateHandler).onWorkerPoolSizeChange(anyInt());
     workerPool = new WorkerPool(WORKER_QUEUE_NAME_TEST, new MockWorkerProducer(), workerUpdateHandler);
-    taskConsumer = new TaskConsumerImpl(mock(ExecutorService.class), new QueueConfig("testqueue", false, false, null), mock(ForwardTaskHandler.class),
+    taskConsumer = new TaskConsumerImpl(mock(ExecutorService.class), new QueueConfig("testqueue", false, false, -1, null),
+        mock(ForwardTaskHandler.class),
         new MockAdaptorFactory()) {
       @Override
       public void messageDelivered(final Message message) {

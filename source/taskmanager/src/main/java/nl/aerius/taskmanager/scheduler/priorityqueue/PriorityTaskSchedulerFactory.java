@@ -40,7 +40,7 @@ public class PriorityTaskSchedulerFactory implements TaskSchedulerFactory<Priori
     final Function<Comparator<Task>, Queue<Task>> queueCreator = c -> createQueue(queueConfig.eagerFetch(), c);
     final PriorityQueueMap<?> priorityQueueMap = createPriorityQueueMap(queueConfig.eagerFetch());
 
-    return new PriorityTaskScheduler(priorityQueueMap, queueCreator, queueConfig.queueName());
+    return new PriorityTaskScheduler(priorityQueueMap, queueCreator, queueConfig.queueName(), queueConfig.maxWorkersAvailable());
   }
 
   private static Queue<Task> createQueue(final boolean eagerFetch, final Comparator<Task> c) {

@@ -38,6 +38,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +73,7 @@ class PriorityTaskSchedulerTest {
   private Task task2a;
   private Task task2b;
   private Task task3;
+  private PriorityTaskSchedule configuration;
   private PriorityTaskScheduler scheduler;
 
   @BeforeEach
@@ -78,7 +81,7 @@ class PriorityTaskSchedulerTest {
     taskConsumer1 = createMockTaskConsumer(QUEUE1);
     taskConsumer2 = createMockTaskConsumer(QUEUE2);
     final TaskConsumer taskConsumer3 = createMockTaskConsumer(QUEUE3);
-    final PriorityTaskSchedule configuration = new PriorityTaskSchedule();
+    configuration = new PriorityTaskSchedule();
     configuration.setWorkerQueueName("TEST");
     final PriorityTaskQueue tc1 = new PriorityTaskQueue(QUEUE1, 0, TEST_CAPACITY);
     final PriorityTaskQueue tc2 = new PriorityTaskQueue(QUEUE2, 1, TEST_CAPACITY);
@@ -86,8 +89,7 @@ class PriorityTaskSchedulerTest {
     configuration.getQueues().add(tc1);
     configuration.getQueues().add(tc2);
     configuration.getQueues().add(tc3);
-    scheduler = (PriorityTaskScheduler) FACTORY.createScheduler(new QueueConfig(QUEUE1, false, true, null));
-    configuration.getQueues().forEach(scheduler::updateQueue);
+    scheduler = createScheduler(0);
     task1 = createTask(taskConsumer1, "1");
     task2a = createTask(taskConsumer2, "2a");
     task2b = createTask(taskConsumer2, "2b");
@@ -202,24 +204,36 @@ class PriorityTaskSchedulerTest {
    * Test if getNextTask correctly gets new task in case of a big worker pool.
    * If capacity is reached for a task, it should not run unless a task of the same queue is returned as finished.
    * In the meanwhile, other tasks can start/finish (as long as there is a capacity for those tasks).
+   *
+   * This test also tests the maxWorkersAvailable setting.
+   *
+   * @param maxWorkersAvailable the configured maximum number of workers available, 0 means not set
+   * @param nrOfTasksToTake number of tasks to initial take to reach 70% of total number of available workers
    */
-  @Test
+  @ParameterizedTest
+  @CsvSource({
+      // No max worker available set. With 10 actual workers available it should take 70% of that, which is 7
+      "0,7",
+      // Max workers available is 20. With 10 actual workers it should look at the potential 20 numbers, and take 70% of that, which is 14.
+      "20,14"})
   @Timeout(value = 7, unit = TimeUnit.SECONDS)
-  void testGetTaskBigPool() throws InterruptedException, ExecutionException {
+  void testGetTaskBigPool(final int maxWorkersAvailable, final int nrOfTasksToTake) throws InterruptedException, ExecutionException {
+    scheduler = createScheduler(maxWorkersAvailable);
     scheduler.onWorkerPoolSizeChange(10);
     final List<Task> tasks = new ArrayList<>();
     final List<Task> sendTasks = new ArrayList<>();
-    for (int i = 0; i < 10; i++) {
+    // Put 20 tasks in the queue to be picked up.
+    for (int i = 0; i < 20; i++) {
       final Task task = createTask(taskConsumer2, "1");
       scheduler.addTask(task);
       tasks.add(task);
     }
-    for (int i = 0; i < 7; i++) {
-      final Task sendTask = scheduler.getNextTask();
-      sendTasks.add(sendTask);
+    // It should at least be able to get the given nr of nrOfTasksToTake
+    for (int i = 0; i < nrOfTasksToTake; i++) {
+      sendTasks.add(scheduler.getNextTask());
     }
     scheduler.addTask(task1);
-    assertSame(task1, scheduler.getNextTask(), "Should still get task 1");
+    assertSame(task1, scheduler.getNextTask(), "Should still get task 1 because other tasks have reach the limit");
     final Task task1b = createTask(taskConsumer1, "1b");
     scheduler.addTask(task1b);
     assertSame(task1b, scheduler.getNextTask(), "Should still get task 1b");
@@ -294,13 +308,21 @@ class PriorityTaskSchedulerTest {
   }
 
   private TaskConsumer createMockTaskConsumer(final String taskQueueName) throws IOException {
-    return new TaskConsumerImpl(mock(ExecutorService.class), new QueueConfig(taskQueueName, false, false, null), mock(ForwardTaskHandler.class),
+    return new TaskConsumerImpl(mock(ExecutorService.class), new QueueConfig(taskQueueName, false, false, -1, null), mock(ForwardTaskHandler.class),
         new MockAdaptorFactory()) {
       @Override
       public void messageDelivered(final Message message) {
         //no-op.
       }
     };
+  }
+
+  private PriorityTaskScheduler createScheduler(final int maxWorkerAvailable) {
+    final PriorityTaskScheduler scheduler = (PriorityTaskScheduler) FACTORY
+        .createScheduler(new QueueConfig(QUEUE1, false, true, maxWorkerAvailable, null));
+
+    configuration.getQueues().forEach(scheduler::updateQueue);
+    return scheduler;
   }
 
   private static Task createTask(final TaskConsumer tc, final String messageId) {

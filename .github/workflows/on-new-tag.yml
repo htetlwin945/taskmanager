@@ -1,8 +1,9 @@
-name: release-published-event
+name: new-tag
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - '**'
 
 jobs:
   job:
@@ -14,7 +15,6 @@ jobs:
 
       - uses: ./aerius-github-actions/events/release-event-action
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
@@ -22,7 +22,6 @@ jobs:
 
       - uses: ./aerius-github-actions/extras/docker-publish-action
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_REGISTRY_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           DOCKER_REGISTRY_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           DOCKER_IMAGE_NAME: ${{ github.event.repository.name }}

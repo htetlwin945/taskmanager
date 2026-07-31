@@ -1,4 +1,4 @@
-name: pull_request-opened-synchronize-reopened-event
+name: pull_request-opened-synchronize-reopened
 
 on:
   pull_request:
@@ -14,12 +14,10 @@ jobs:
 
       - uses: ./aerius-github-actions/events/pull_request-event-action
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ROOT_POM_DIRECTORY: repo/source
 
       - uses: ./aerius-github-actions/extras/docker-build-action
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_IMAGE_NAME: ${{ github.event.repository.name }}
           DOCKER_WORK_DIRECTORY: repo/source
           DOCKER_BUILD_PLATFORMS: linux/amd64,linux/arm64
